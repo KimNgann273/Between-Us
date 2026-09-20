@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wobble Orb 2D</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;1,500&family=Inter:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Name gate: an opaque overlay that fades away to reveal the orb already
+       running underneath it. -->
+  <div id="nameScreen">
+    <div class="name-card">
+      <h1>Wobble Orb 2D</h1>
+      <p>What should we call you?</p>
+      <input type="text" id="nameInput" placeholder="Your name" autocomplete="off">
+      <button type="button" id="continueBtn">Continue</button>
+    </div>
+  </div>
+
+  <canvas class="orb-scene" role="img"
+    aria-label="An animated 2D blob that continuously wobbles and drifts, its outline rippling on layered noise and leaning gently toward the cursor."></canvas>
+
+  <div class="orb-vignette"></div>
+
+  <div class="orb-mark">
+    <h1>Wobble Orb 2D</h1>
+    <p id="orbGreeting">One soft blob, breathing on noise. No WebGL.</p>
+  </div>
+
+  <div class="orb-panel">
+    <div class="orb-control">
+      <div class="orb-control-row"><label for="orbWobble">Wobble</label><output id="orbWobbleVal">0.28</output></div>
+      <input type="range" id="orbWobble" min="0" max="60" step="1" value="28">
+    </div>
+    <div class="orb-control">
+      <div class="orb-control-row"><label for="orbSpeed">Speed</label><output id="orbSpeedVal">1.0</output></div>
+      <input type="range" id="orbSpeed" min="10" max="250" step="5" value="100">
+    </div>
+    <div class="orb-control">
+      <div class="orb-control-row"><label for="orbSize">Size</label><output id="orbSizeVal">1.0</output></div>
+      <input type="range" id="orbSize" min="40" max="150" step="2" value="100">
+    </div>
+    <div class="orb-themes" role="group" aria-label="Color theme">
+      <button class="orb-swatch" data-theme="ember" aria-pressed="true" aria-label="Ember theme" style="background:linear-gradient(135deg,#ff8f5e,#ffc98a);"></button>
+      <button class="orb-swatch" data-theme="tide" aria-pressed="false" aria-label="Tide theme" style="background:linear-gradient(135deg,#4fb3d9,#8fe3d0);"></button>
+      <button class="orb-swatch" data-theme="nebula" aria-pressed="false" aria-label="Nebula theme" style="background:linear-gradient(135deg,#b98cff,#ff8fd0);"></button>
+    </div>
+  </div>
+
+  <div class="orb-caption">Cursor tilts · sliders reshape</div>
+
+  <script src="sketch.js"></script>
+</body>
+</html>
