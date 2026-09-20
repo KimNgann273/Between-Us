@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Entanglement</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    background: #0a0a12;
+    color: #eee;
+    font-family: Georgia, serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  #orb {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #6fa8dc, #1a3a6b);
+    box-shadow: 0 0 40px #4a7fc9;
+    margin-bottom: 40px;
+    transition: all 0.6s ease;
+  }
+
+  #orb.happy {
+    background: radial-gradient(circle at 35% 35%, #ffe38a, #c99b1f);
+    box-shadow: 0 0 60px #ffd45c;
+  }
+
+  #orb.sad {
+    background: radial-gradient(circle at 35% 35%, #7d8fa8, #2b3a4a);
+    box-shadow: 0 0 20px #445566;
+    transform: scale(0.9);
+  }
+
+  #orb.angry {
+    background: radial-gradient(circle at 35% 35%, #ff8a6f, #a31a1a);
+    box-shadow: 0 0 60px #ff5c3d;
+  }
+
+  #orbLine {
+    max-width: 500px;
+    font-size: 1.2em;
+    font-style: italic;
+    min-height: 60px;
+    margin-bottom: 20px;
+  }
+
+  #reaction {
+    max-width: 500px;
+    font-size: 1em;
+    color: #bbb;
+    min-height: 40px;
+    margin-bottom: 30px;
+  }
+
+  .replyBtn {
+    display: block;
+    margin: 10px auto;
+    padding: 12px 24px;
+    background: #1c1c2b;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    max-width: 400px;
+    font-family: Georgia, serif;
+  }
+
+  .replyBtn:hover {
+    background: #2c2c3f;
+  }
+
+  #nameScreen input {
+    padding: 10px;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background: #1c1c2b;
+    color: #eee;
+    margin-bottom: 20px;
+  }
+
+  #nameScreen button {
+    padding: 10px 20px;
+    font-size: 1em;
+    background: #1c1c2b;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .hidden {
+    display: none;
+  }
+
+  @keyframes glitchShift {
+    0%   { transform: translate(0, 0); }
+    10%  { transform: translate(-6px, 2px); }
+    20%  { transform: translate(5px, -3px); }
+    30%  { transform: translate(-3px, 3px); }
+    40%  { transform: translate(6px, 0); }
+    50%  { transform: translate(-4px, -2px); }
+    60%  { transform: translate(3px, 4px); }
+    70%  { transform: translate(-6px, -1px); }
+    80%  { transform: translate(4px, 2px); }
+    90%  { transform: translate(-2px, -3px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  @keyframes glitchColor {
+    0%, 100% { filter: none; }
+    20% { filter: hue-rotate(90deg) saturate(3); }
+    40% { filter: invert(1); }
+    60% { filter: hue-rotate(-90deg) saturate(2); }
+    80% { filter: contrast(3) brightness(1.5); }
+  }
+
+  body.glitching {
+    animation: glitchShift 0.15s steps(2, end) infinite, glitchColor 0.3s steps(1, end) infinite;
+  }
+
+  #glitchOverlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,255,255,0.03) 0px,
+      rgba(255,255,255,0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    opacity: 0;
+    z-index: 999;
+  }
+
+  #glitchOverlay.active {
+    opacity: 1;
+    animation: glitchFlicker 0.1s steps(1, end) infinite;
+  }
+
+  @keyframes glitchFlicker {
+    0%, 100% { opacity: 0.9; }
+    50% { opacity: 0.4; }
+  }
+</style>
+</head>
+<body>
+
+  <div id="glitchOverlay"></div>
+
+  <div id="nameScreen">
+    <p>What is your name?</p>
+    <input type="text" id="nameInput" placeholder="Enter your name">
+    <br>
+    <button onclick="startScene()">Continue</button>
+  </div>
+
+  <div id="scene" class="hidden">
+    <div id="orb"></div>
+    <div id="orbLine"></div>
+    <div id="reaction"></div>
+    <div id="replies"></div>
+  </div>
+
+  <div id="endingScreen" class="hidden">
+    <div id="orb"></div>
+    <div id="endingText" style="max-width:500px; font-size:1.2em;"></div>
+  </div>
+
+<script>
+  let playerName = "";
+  let score = 0;
+  let currentLine = 0;
+  let angryCount = 0;
+  const GLITCH_THRESHOLD = 2; // total angry replies across the whole scene
+
+  const dialogue = [
+    {
+      orbLine: "...it's cold in here. Colder than it should be.",
+      replies: [
+        { text: "I'm here now. You're not alone.", score: 1, mood: "happy",
+          orbReact: "The orb's glow softens, pulsing slower. \"...you came.\"" },
+        { text: "What happened to you?", score: -1, mood: "sad",
+          orbReact: "The orb shrinks slightly, dimming. \"I don't... I don't want to say it yet.\"" }
+      ]
+    },
+    {
+      orbLine: "I don't think anyone was looking for me.",
+      replies: [
+        { text: "I was. I found you, didn't I?", score: 1, mood: "happy",
+          orbReact: "A small flicker, almost a laugh. \"...maybe you were.\"" },
+        { text: "Maybe you weren't hiding well enough.", score: -1, mood: "angry",
+          orbReact: "The orb flares, sharp and sudden. \"That's not fair. That's not fair!\"" }
+      ]
+    },
+    {
+      orbLine: "Do you ever feel like you're made of the wrong shape?",
+      replies: [
+        { text: "All the time. It's okay to feel that way.", score: 1, mood: "happy",
+          orbReact: "The orb steadies, its edges less jagged. \"...oh. Okay.\"" },
+        { text: "You just need to stop thinking like that.", score: -1, mood: "angry",
+          orbReact: "The orb pulses hard, light stuttering. \"You don't understand anything.\"" }
+      ]
+    },
+    {
+      orbLine: "I get scared you'll leave like the others did.",
+      replies: [
+        { text: "I'm not going anywhere.", score: 1, mood: "happy",
+          orbReact: "The orb brightens, warm and steady. \"...say that again.\"" },
+        { text: "I can't promise forever. No one can.", score: -1, mood: "sad",
+          orbReact: "The orb dims and curls inward, quiet. \"...right. Of course.\"" }
+      ]
+    },
+    {
+      orbLine: "...why does it feel like I'm holding my breath, even now?",
+      replies: [
+        { text: "Maybe you can let it go, just for a second.", score: 1, mood: "happy",
+          orbReact: "A long, slow exhale of light. \"...I forgot I could do that.\"" },
+        { text: "You don't need to overthink everything.", score: -1, mood: "angry",
+          orbReact: "The orb tightens, light going sharp at the edges. \"Easy for you to say.\"" }
+      ]
+    },
+    {
+      orbLine: "Are you going to remember me after this?",
+      replies: [
+        { text: "Always. This mattered.", score: 1, mood: "happy",
+          orbReact: "The orb glows fully, almost too bright to look at. \"...thank you.\"" },
+        { text: "I mean... we'll see.", score: -1, mood: "sad",
+          orbReact: "The orb flickers, uncertain, and doesn't answer right away." }
+      ]
+    }
+  ];
+
+  function startScene() {
+    const input = document.getElementById("nameInput").value.trim();
+    playerName = input || "friend";
+
+    document.getElementById("nameScreen").classList.add("hidden");
+    document.getElementById("scene").classList.remove("hidden");
+
+    showLine();
+  }
+
+  function showLine() {
+    const line = dialogue[currentLine];
+    document.getElementById("orbLine").textContent = line.orbLine;
+    document.getElementById("reaction").textContent = "";
+
+    const repliesDiv = document.getElementById("replies");
+    repliesDiv.innerHTML = "";
+
+    line.replies.forEach((reply, index) => {
+      const btn = document.createElement("button");
+      btn.className = "replyBtn";
+      btn.textContent = reply.text;
+      btn.onclick = () => pickReply(index);
+      repliesDiv.appendChild(btn);
+    });
+  }
+
+  function pickReply(index) {
+    const reply = dialogue[currentLine].replies[index];
+    score += reply.score;
+
+    if (reply.mood === "angry") {
+      angryCount++;
+    }
+
+    document.getElementById("reaction").textContent = reply.orbReact;
+    document.getElementById("orb").className = reply.mood;
+    document.getElementById("replies").innerHTML = "";
+
+    if (reply.mood === "angry" && angryCount >= GLITCH_THRESHOLD) {
+      triggerGlitch();
+    }
+
+    setTimeout(() => {
+      currentLine++;
+      if (currentLine < dialogue.length) {
+        showLine();
+      } else {
+        showEnding();
+      }
+    }, 2200);
+  }
+
+  function triggerGlitch() {
+    document.body.classList.add("glitching");
+    document.getElementById("glitchOverlay").classList.add("active");
+
+    setTimeout(() => {
+      document.body.classList.remove("glitching");
+      document.getElementById("glitchOverlay").classList.remove("active");
+    }, 900);
+  }
+
+  function showEnding() {
+    document.getElementById("scene").classList.add("hidden");
+    document.getElementById("endingScreen").classList.remove("hidden");
+
+    const orb = document.getElementById("endingScreen").querySelector("#orb");
+    const endingText = document.getElementById("endingText");
+
+    if (score >= 2) {
+      orb.className = "happy";
+      endingText.textContent = playerName + ", they're happy because of you... You need to keep it going so they don't get upset again. It's unsettling when they're sad.";
+    } else {
+      orb.className = "angry";
+      endingText.textContent = "Is there something wrong in what " + playerName + " said? I'm sorry... I'll try to change next time. Don't be mad at me.";
+    }
+  }
+</script>
+
+</body>
+</html>
