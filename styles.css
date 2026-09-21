@@ -1,11 +1,13 @@
 :root{
   --bg: #06070c;
   --ink: #e9ede9;
-  --ink-dim: #8b948f;
-  --ink-faint: #4c554f;
+  --ink-dim: #e9ebea;
+  --ink-faint: #757575;
   --narrator: #c3ccc6;         /* the caption: brighter than --ink-dim, quieter than the organisms */
-  --hint: #9ecfb2;             /* --spore, stepped back: the colour the piece already uses for "you can act" */
+  --hint: #acadad;             /* --spore, stepped back: the colour the piece already uses for "you can act" */
   --line: rgba(233, 237, 233, 0.16);
+  --nav-line: rgba(233, 237, 233, 0.34);   /* the step-nav frame: the one control that must be found */
+  --nav-ink: #b4bdb8;                      /* resting arrows: legible on its own, with headroom below --ink for hover */
   --spore: #b9f2d0;
   /* Home only */
   --grid: rgba(233, 237, 233, 0.052);
@@ -23,7 +25,7 @@ html, body{
   overflow: hidden;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   font-weight: 300;
 }
 
@@ -50,7 +52,7 @@ html, body{
   border-radius: 2px;
   background: transparent;
   color: var(--ink-dim);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -67,7 +69,7 @@ html, body{
   border-left-width: 0;
   background: transparent;
   color: var(--ink-faint);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -89,7 +91,9 @@ html, body{
   bottom: clamp(16px, 2.4vw, 28px);
   display: flex;
   align-items: stretch;
-  border: 1px solid var(--line);
+  border: 1px solid var(--nav-line);
+  background: rgba(233, 237, 233, 0.04);
+  backdrop-filter: blur(2px);
   z-index: 10;
 }
 .step-nav button{
@@ -97,19 +101,19 @@ html, body{
   height: 32px;
   border: 0;
   background: transparent;
-  color: var(--ink-faint);
+  color: var(--nav-ink);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
   transition: color 0.25s ease;
 }
 .step-nav button:hover:not(:disabled){ color: var(--ink); }
-.step-nav button:disabled{ opacity: 0.3; cursor: default; }
+.step-nav button:disabled{ opacity: 0.45; cursor: default; }
 .step-nav button.ready{
   color: var(--spore);
   animation: breathe 2.4s ease-in-out infinite;
 }
-.rule{ width: 1px; background: var(--line); }
+.rule{ width: 1px; background: var(--nav-line); }
 
 @keyframes breathe{
   0%, 100%{ opacity: 0.45; }
@@ -165,7 +169,7 @@ html, body{
    Instrument's job, not the Narrator's, so they are set in the Instrument's
    voice — the same mono the telemetry and the tabs are in. */
 .caption.is-hint{
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
   font-size: clamp(13px, 1.1vw, 15px);
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -300,7 +304,7 @@ body.is-outro .caption{
 }
 .tel{
   position: absolute;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
   font-size: 10.5px;
   letter-spacing: 0.10em;
   color: var(--tel);
@@ -309,8 +313,6 @@ body.is-outro .caption{
 }
 .tel.tl{ top: 26px;    left: 30px; }
 .tel.tr{ top: 26px;    right: 30px; }
-.tel.bl{ bottom: 26px; left: 30px; }
-.tel.br{ bottom: 26px; right: 30px; }
 
 /* Begin retracts the telemetry off its own edge before the rest fades. */
 body.is-leaving .tel.tl,
@@ -333,7 +335,7 @@ body.is-leaving #homeScreen .grid{ opacity: 0; }
 
 .title{
   margin: 0 0 clamp(26px, 4vh, 44px);
-  font-family: 'mieszkanie9', 'Inter', system-ui, sans-serif;
+  font-family: 'mieszkanie9', 'Atkinson Hyperlegible Next', system-ui, sans-serif;
   font-weight: 400;
   font-size: clamp(52px, 9.5vw, 132px);
   line-height: 0.96;
@@ -352,19 +354,11 @@ body.is-leaving #homeScreen .grid{ opacity: 0; }
 
 .specimen{
   margin: 0 0 16px;
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
   font-size: clamp(10px, 1.05vw, 13px);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-faint);
-}
-
-.tagline{
-  margin: 0 0 clamp(30px, 5vh, 48px);
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: clamp(12px, 1.25vw, 15px);
-  letter-spacing: 0.02em;
-  color: var(--ink-dim);
 }
 
 #beginBtn{
@@ -373,7 +367,7 @@ body.is-leaving #homeScreen .grid{ opacity: 0; }
   border: 0;                       /* the frame is stippled onto the canvas */
   background: transparent;
   color: var(--spore);
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: 'Atkinson Hyperlegible Mono', ui-monospace, monospace;
   font-size: 11px;
   letter-spacing: 0.18em;
   cursor: pointer;

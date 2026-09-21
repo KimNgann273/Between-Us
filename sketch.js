@@ -14,7 +14,6 @@ let world;
 let journey;
 let mode = 'home';          // 'home' | 'journey' | 'outro'
 let clock = 0;
-let fastForwarding = false; // true while the skip button runs the story ahead; phases ignore the cursor
 // `x`/`y` are the raw cursor; `sx`/`sy` trail behind them, smoothed. Pointer
 // events arrive in bursts that can jump several pixels, and the spore follows
 // the smoothed pair so that jitter never reaches it.
@@ -42,8 +41,6 @@ function setup() {
   Texture.build();
   Glow.build();
   UI.showHome();
-
-  addSkipButton(); // TEMP: remove before submitting
 }
 
 function draw() {
@@ -152,49 +149,6 @@ function isUnlocked(index) {
 
 function refreshUI() {
   UI.refresh({ ...journey, unlocked: PHASES.map((_, i) => isUnlocked(i)) });
-}
-
-// ---- TEMP: skip button for testing -------------------------------------------
-// Completes the current phase and moves on. Delete this whole block and the
-// addSkipButton() call in setup() before submitting.
-
-function addSkipButton() {
-  const button = document.createElement('button');
-  button.textContent = 'Skip ›';
-  button.className = 'pill';
-  Object.assign(button.style, {
-    position: 'fixed',
-    left: 'clamp(16px, 2.4vw, 30px)',
-    bottom: 'clamp(16px, 2.4vw, 28px)',
-    zIndex: 10,                      // Home and Outro screens cover it
-    color: 'rgb(255, 150, 150)',
-    borderColor: 'rgba(255, 150, 150, 0.5)'
-  });
-  button.addEventListener('click', skip);
-  document.body.appendChild(button);
-}
-
-function skip() {
-  if (mode !== 'journey') return;
-  const phase = PHASES[journey.current];
-  if (phase === Drifting) Camera.snapTo(0, 0, Camera.fitZoom());
-  if (phase === Receiving) Receiving.germinateFirst();
-  if (phase !== Drifting) fastForward(phase);
-  complete(phase);
-  next();
-}
-
-// Runs a phase's own story at speed until it's done, so the next phase opens
-// on the world it expects (Giving needs Receiving's fusion to exist).
-function fastForward(phase) {
-  const index = PHASES.indexOf(phase);
-  fastForwarding = true;
-  for (let step = 0; step < 4000 && !journey.done[index]; step++) {
-    phase.update(0.05);
-    growWorld(world, 0.05);
-  }
-  fastForwarding = false;
-  Caption.clear();
 }
 
 // ---- input ---------------------------------------------------------------

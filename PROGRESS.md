@@ -8,16 +8,18 @@ Times are local (UTC+7). Newest entry first. For the full design see [docs/desig
 
 | Part | State |
 | --- | --- |
-| Home screen | ✅ Rebuilt as the Instrument (v0.11): live world behind a ruled grid, stippled crosshair, live telemetry, title in mieszkanie9 |
+| Home screen | ✅ Rebuilt as the Instrument (v0.11): live world behind a ruled grid, stippled crosshair, live telemetry, title in mieszkanie9. Bottom telemetry now absent from the page, and `Landing.telemetry` no longer dies on a missing readout (v0.18) |
 | Drifting (`drifting.js`) | ✅ Working: spring-damped drift + cursor lean, scroll zoom, auto-zoom, captions, unlocks Receiving |
 | Receiving (`receiving.js`) | ✅ Working: click to germinate, cursor leads hyphae, reserves run out short of the Nutrient, another network rescues and fuses, nutrients pulse across, First Spore revives |
 | Giving (`giving.js`) | 🟡 v0.8 build works, now reaching through Cords (v0.10). Redesign agreed from the new board, not built yet: [docs/phase3-plan.md](docs/phase3-plan.md) |
 | Outro | ✅ Five closing lines, played one at a time, Home under the last (v0.15) |
+| Reached spores (`giving.js`) | ✅ Three colours by distance from the First Spore — green 1–2 hops, blue 3, purple 4+ (`GIVING.reachedBands`); untouched spores stay colourless as in Phases 1–2 (v0.20) |
 | Look (`render.js`) | 🟡 Glow sprites now cached per colour, which is what made Giving crawl (v0.14). Nutrient, junctions and pulses restyled off the starter visuals (v0.13). **Still not seen in motion** |
 | Texture (`texture.js`) | ✅ Soil, drifting motes, vignette and film grain, all tunable from `TEXTURE` |
 | Copy (`script.js`) | ✅ Board lines for all three phases in place, and the five closing lines written |
+| Step nav (`styles.css`) | ✅ Arrows and frame brightened onto their own `--nav-*` tokens so the way forward is findable (v0.16) |
 | Captions (`ui.js`) | ✅ Word-by-word reveal, ~2× faster than v0.8.3; click anywhere to finish the line. Resized, given a soft well so hyphae cannot eat the line, and hints split off into the Instrument's voice (v0.12) |
-| Typography | ✅ All three faces embedded as data URIs and confirmed rendering; nothing is fetched (v0.13) |
+| Typography | ✅ All three faces embedded as data URIs and confirmed rendering; nothing is fetched (v0.13). Everything but the title reset in Atkinson Hyperlegible (v0.21) |
 | Sound | ⬜ Dropped for now (the Begin chime was considered and declined, v0.11) |
 | Submission (journal PDF, Figma PDF + link, recording, screenshots, zip) | ⬜ Not started |
 
@@ -36,9 +38,246 @@ Times are local (UTC+7). Newest entry first. For the full design see [docs/desig
 | Everything the Narrator says | `script.js` |
 | Captions, tabs, Home and Outro screens | `ui.js` |
 | Home's Instrument: crosshair, stipple, telemetry, framing (`HOME_*`, `CROSS_*` at the top) | `landing.js` |
-| Every face, embedded (mieszkanie9, Inter, IBM Plex Mono) | `fonts.css` |
+| Every face, embedded (mieszkanie9, Atkinson Hyperlegible Next + Mono) | `fonts.css` |
 
 ## Log
+
+### v0.21 · 2026-09-20 23:55 · Everything but the title is Atkinson Hyperlegible
+
+Inter and IBM Plex Mono are out. The title keeps mieszkanie9 — it is the one
+thing that was asked to stay.
+
+**Two cuts of one typeface**, because the piece sets two voices and both had to
+move:
+
+- **Atkinson Hyperlegible Next** (variable 200-800, 33 KB) for the Narrator's
+  prose. The original 2019 Atkinson Hyperlegible on Google Fonts is static 400
+  and 700 only, and `body` sets `font-weight: 300` — it would have silently
+  rendered a whole step heavier. Next is the 2025 revision of the same face and
+  covers the axis, so the captions keep the weight they were designed at.
+- **Atkinson Hyperlegible Mono** (variable 200-800, 17 KB) for the Instrument's
+  voice: telemetry, tabs, the specimen line, Begin, and the hint captions. This
+  one is not a style choice. `Landing.telemetry` pads its numbers to fixed
+  widths with `padStart` so the readouts hold still; in a proportional face they
+  would jitter every 0.1s as digits changed.
+
+50 KB replaces the 58 KB Inter and IBM Plex Mono took, so the page got slightly
+lighter. Both are Google's latin subsets taken as served, embedded as data URIs
+in `fonts.css` exactly as the other faces are — the piece still fetches nothing
+and still runs from an unzipped folder over `file://`.
+
+**Licence:** Atkinson Hyperlegible is SIL Open Font License 1.1 (Braille
+Institute of America). Unlike mieszkanie9's `fsType = 4`, there is nothing to
+check before embedding it and nothing to credit beyond the licence.
+
+**Checked** by rasterizing the real chrome through WebKit off the actual
+`fonts.css` and `styles.css` — title, caption, hint, pill, tabs, specimen,
+Begin and four telemetry lines. The faces load from their data URIs, the title
+is untouched, and the two CAM readouts still align column for column.
+
+`styles.css` kept its fallbacks honest: `system-ui, sans-serif` after Next, and
+`ui-monospace, monospace` after Mono, so a failure degrades to the right kind of
+face rather than to anything at hand. `prototype-orb/` still names Inter and IBM
+Plex Mono; it is reference material, not the piece, and was left alone.
+
+**Still unseen:** the faces in motion, and the word-by-word caption reveal at
+the new metrics.
+
+### v0.20 · 2026-09-20 23:20 · Giving's three colours are distance, not decoration
+
+Settled in a design interview (all questions answered), then built. The single
+violet of v0.19 painted every reached spore the same, which read as a purple
+flood. The three colours now say **how far the help has travelled**.
+
+| Generation | Colour | Band | Count at full spread |
+| --- | --- | --- | --- |
+| 1–2 | green | 150–175 | 13 |
+| 3 | blue | 200–225 | 13 |
+| 4+ | purple | 255–275 | 12 |
+
+- `GIVING.reachedBands` holds the three bands. `reachedHue(generation, tint)`
+  picks one and places the spore inside it.
+- `Spore.generation` (receiving.js) counts hops from the First Spore; `joinNetwork`
+  sets `target.generation = from.generation + 1` and the hue from it, still before
+  `germinate()`, so the colour arrives as the spore comes alive.
+- `sporeVariation` gained `tint: roll(7)` — a position hash, so a spore's place
+  inside its band is fixed at world creation ([ADR 0002](docs/adr/0002-variation-fixed-at-world-creation.md))
+  rather than drawn at join time. The same spore lands on the same hue however
+  the run unfolds, and the field keeps 38 distinct hues instead of three.
+- `GIVING.doneFraction` 0.35 → 0.8.
+
+**Two measurements decided the design**, both from the headless harness:
+
+1. *The spread is 5 generations deep, distributed 5 / 8 / 13 / 11 / 1.* Mapping
+   generation 1 → green, 2 → blue, 3+ → purple would have given 5 / 8 / 25 — the
+   same purple flood in a new costume. Banding 1–2 / 3 / 4+ gives 13 / 13 / 12.
+2. *`doneFraction` only decides when the next arrow lights up* — `spread()` runs
+   whether or not the phase is done, so the network reaches 38 of 40 spores at
+   depth 5 in this build too, exactly as the redesign intends. One schedule
+   serves both builds; no need to tune twice.
+
+At 0.35 the phase ended on 12 green, 2 blue and **no purple at all**, which is
+what "I still don't see any blue" was. 0.8 ends it at 28s on 13 / 13 / 6, and the
+last purples keep arriving while the viewer plays.
+
+Unchanged: untouched spores stay colourless as in Phases 1–2; the First Spore
+(165, saturation 85) and the network that rescued it in Receiving keep their own
+hues; junctions still blend. `render.js` was not touched — it already draws
+whatever hue a spore carries.
+
+`docs/design.md`'s colour row now describes this. `CONTEXT.md` is untouched: its
+Giving entry is about the redesign's mechanics, which are still gated on the
+go-ahead ([phase3-plan.md](docs/phase3-plan.md)).
+
+**Still unseen:** all of it in motion.
+
+### v0.19 · 2026-09-20 22:35 · The violet marks what the hyphae reached, not what is left
+
+v0.17 had it backwards: it put the violet on every spore still lying alone, so
+Giving opened with the whole field changing colour at once. What it should mark
+is the opposite — the spores the First Spore's hyphae actually reach.
+
+- `render.js` is back to exactly what it was before v0.17: `WAITING` is gone and
+  a dormant spore is a colourless halo again, in all three phases. Confirmed
+  byte-identical to the pre-v0.17 file.
+- `GIVING.joinedHue` (284) is the new dial, with the rest of Giving's tunables.
+- `joinNetwork` sets `target.hue = GIVING.joinedHue` as the spore is reached,
+  just before `germinate()`. `glow` is still 0 at that point and fades up
+  afterwards, so the violet arrives *with* the spore coming alive rather than
+  being switched on — no extra fade machinery needed.
+- `WAITING.reset()` is out of `goHome`, so `sketch.js` now differs from its
+  pre-v0.17 state only by the skip-button removal.
+
+The First Spore (165) and the network that rescued it in Receiving keep their
+own hues, so Giving reads as three things at once: where it started, what it has
+given to, and who is still untouched.
+
+Junctions blend the hues they join, which gives this for free: 156–182 through
+the Receiving fusion, 222–249 where the First Spore's green meets the violet it
+made, and 284 between two spores it reached. The gradient runs outward along the
+network without anything being written to do it.
+
+**Verified** by running the headless harness through all three phases (Drifting
+zoomed out, Receiving germinated and run to done, Giving run to done): no throw,
+and of 40 spores — 26 still dormant and colourless, 12 violet, 2 in the living
+band (the First Spore and its rescuer). Rasterized the three states side by side
+and a field at true size.
+
+Open dial: 284 reads slightly magenta. Lower it toward 275 for a bluer purple.
+
+### v0.18 · 2026-09-20 22:05 · Begin looked dead because one telemetry span was missing
+
+**Symptom.** Click Begin: the title page dissolves, but the canvas never moves
+again. The First Spore sits exactly where it was and Drifting never appears to
+start.
+
+**Cause.** `index.html` no longer carries the `telWorld` and `telState` spans —
+the two bottom telemetry readouts. `Landing.telemetry` still wrote to both:
+
+```js
+document.getElementById('telWorld').textContent = ...   // getElementById → null
+```
+
+so every call threw `TypeError: Cannot set properties of null`. It is called
+from `Landing.draw`, which runs at the end of `draw()` on Home — but throttled
+to once every 0.1s of `clock`, so it first fires around frame 6, not frame 1.
+
+That one throw is fatal, because of how the bundled p5 schedules frames:
+
+```js
+d.redraw(), ... , d._loop && (d._requestAnimId = window.requestAnimationFrame(d._draw))
+```
+
+The next `requestAnimationFrame` is requested *after* `redraw()` in the same
+comma expression. When `draw()` throws, that never runs and **the loop stops for
+good**. The canvas freezes on the last frame it completed — a Home frame, which
+is the First Spore sitting in the crosshair. Begin still dissolves the title,
+because that is pure CSS and needs no loop, which is exactly why it looks like
+Begin is broken rather than like the sketch has died.
+
+**Fix.** `Landing.telemetry` now writes through a `show(id, text)` helper that
+skips a readout that is not in the page. A missing display should never be able
+to stop the render loop.
+
+**Verified** with a headless harness (stub p5 + stub DOM, all ten scripts in one
+scope): 120 Home frames, `begin()`, the dissolve timeout, then 400 Drifting
+frames. Against the old `landing.js` it throws on home frame 5 at
+`landing.js:152`; against the fix it runs clean and the First Spore drifts to
+(73, 116) from its home at (0, 50). The harness's first version invented a DOM
+element for every id asked for, which hid this completely — it now returns
+`null` for any id not in `index.html`, the way a browser does.
+
+**Left behind by the same removal**, not touched here: `styles.css` still has
+`body.is-leaving .tel.bl, body.is-leaving .tel.br` transition rules for spans
+that no longer exist, and no `.tel.bl` / `.tel.br` position rules. Dead but
+harmless. If the bottom readouts were meant to stay, the two spans and their
+positions need restoring instead.
+
+### v0.17 · 2026-09-20 21:40 · The skip button is gone, and Giving says who is left
+
+**The skip button is out.** The whole `TEMP` block in `sketch.js` — `addSkipButton`,
+`skip` and `fastForward` — plus its call in `setup()`. `fastForwarding` went with
+it, which was read in exactly one place: `leadHyphae` in `receiving.js` ignored
+the cursor while the story ran ahead, and now just reads it. Nothing else
+referenced any of it. There is no longer any way to reach Giving without playing
+Drifting and Receiving, so test that path before submitting.
+
+**The spores still lying alone are violet in Giving.** They were drawn with a
+colourless halo in every phase — right up to here, because germination is the
+moment colour arrives and nothing should pre-empt it. But Giving asks a
+different question: not "what is alive?" but "who is left to reach?", and the
+answer was invisible. A new `WAITING` block in `render.js` holds it:
+
+- `hue: 284`, outside the 140–215 living band, so a waiting spore can never be
+  mistaken for a member of the network.
+- `saturation: 72` — high on purpose. A waiting spore is small and drawn at
+  0.45 alpha; at 42 it read as grey at true size and only looked violet
+  magnified. Checked at 1× against 58 and 88 before settling.
+- `halo`/`haloLit` (0.09 → 0.13): the halo it always had, opened up slightly now
+  that there is colour in it to carry.
+- `lit` fades 0 → 1 over `fadeTime` (1.6s), advanced by `Giving.update`, so
+  entering the phase is not a snap. `goHome` resets it, since returning Home
+  starts the piece over (ADR 0001).
+
+Joining needs no extra work: the dormant layer already fades by `1 - glow` while
+the live body fades in by `glow`, so a spore crossfades out of violet into its
+own hue as it comes alive.
+
+Rasterized the spore-body maths to SVG (`Glow._rgb` and the `pow(1-d, 2.6)`
+falloff copied verbatim, hue/saturation quantised the way the sprite cache
+does) and looked at three things: the violet alone at 1× and 3×, the saturation
+ladder, and a field of 11 joined among 23 waiting. The network still clearly
+dominates; the violet marks who is left without competing.
+
+**Still unseen:** the fade-up itself, since it needs a running frame loop.
+
+### v0.16 · 2026-09-20 21:15 · The step-nav is bright enough to find
+
+The forward/backward arrows sat at `--ink-faint` inside a `--line` frame, both
+of which are tuned to disappear into the dark — right for chrome that should
+not compete with the organisms, wrong for the one control that tells the viewer
+where to go next. The arrows are now on their own two tokens so the piece's
+global greys can keep drifting without dragging the nav with them:
+
+- `--nav-line` (white at 0.34, was 0.16) draws the frame and the divider rule.
+- `--nav-ink` (`#b4bdb8`) is the resting arrow, with headroom left below `--ink`
+  so hover still reads as a change.
+- The frame gained a 4% plate and a 2px blur behind it, so it holds its shape
+  when hyphae grow under it.
+- Disabled went 0.3 → 0.45: still clearly off, no longer invisible.
+
+The `ready` pulse is untouched — it is still `--spore` breathing, and it is now
+a step up from a visible arrow rather than from an invisible one.
+
+Checked with `qlmanage -t` on a scratch page holding all three states side by
+side (rest / prev disabled / next ready), zoomed 3×.
+
+Separately, and **not** part of this change: `:root` now carries
+`--ink-dim: #e9ebea`, `--ink-faint: #fafcfb` and `--hint: #fdfffe`, where the
+piece was built on `#8b948f`, `#4c554f` and `#9ecfb2`. `--ink-faint` is now
+brighter than `--ink`, which inverts the tabs' emphasis — the inactive phase
+tabs read louder than the active one. Worth a decision: keep the flat brightness
+deliberately, or put the ladder back.
 
 ### v0.15 · 2026-09-20 15:38 · The Outro plays its lines one at a time
 
@@ -594,7 +833,6 @@ Built Phases 2 and 3 from the board (A3-WIP, Phase 2 and 3 sections) and the con
    - `Glow.falloff` (2.6) — the shape of every glow in the piece.
 5. **Phase 3 redesign** ([docs/phase3-plan.md](docs/phase3-plan.md)): every question answered; waiting for the student's go. Then update CONTEXT.md and design.md, and build it: 27 spores, click a spore to start, Junctions clicked and pulled, Shimmer, all join.
 6. Polish, then sound if there's time.
-7. Remove the temporary skip button (`TEMP` block in `sketch.js`).
 8. Submission materials. Note the world is deterministic ([ADR 0002](docs/adr/0002-variation-fixed-at-world-creation.md)), so screenshots and the recording can be retaken and will match.
 9. Decide what happens to `wobleor2d-loll/` at the repo root — the orb source the First Spore's body was ported from. It is reference, not part of the piece; either move it next to [prototype-orb/](prototype-orb/) as iteration evidence, or leave it out of the submission zip.
 

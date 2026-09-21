@@ -206,7 +206,7 @@ function revive(s) {
 // harder. Only hyphae already heading roughly that way feel it, so a few follow
 // the cursor while the rest keep growing steadily outward.
 function leadHyphae(spore) {
-  const cursor = pointer.moved && !fastForwarding ? Camera.screenToWorld(pointer.sx, pointer.sy) : null;
+  const cursor = pointer.moved ? Camera.screenToWorld(pointer.sx, pointer.sy) : null;
   for (const hypha of spore.hyphae) {
     if (!hypha.growing) continue;
     const toNutrient = facingPull(hypha, world.nutrient, RECEIVING.nutrientSense);
@@ -324,6 +324,7 @@ class Spore {
     this.glow = isFirst ? 1 : 0; // 0 dormant, 1 fully alive; fades up after germination
     this.flash = 0;            // brief brightening when a pulse arrives
     this.offset = random(Math.PI * 2); // so spores don't breathe in sync
+    this.generation = 0;       // hops from the First Spore, set as Giving reaches it
     this.variation = sporeVariation(x, y); // what makes this spore not a copy of the others
   }
 
@@ -367,7 +368,8 @@ function sporeVariation(x, y) {
     count: between(3, 0.6, 1.4),    // how many hyphae it grows when it joins
     reach: between(4, 0.7, 1.4),    //   ...and how far they go
     curl: between(5, 0.7, 1.5),     //   ...and how much they wander on the way
-    strands: roll(6)                // 2 or 3 strands in a Cord reaching for it
+    strands: roll(6),               // 2 or 3 strands in a Cord reaching for it
+    tint: roll(7)                   // where it sits inside its colour band in Giving
   };
 }
 

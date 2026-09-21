@@ -24,7 +24,21 @@ const GIVING = {
   joinedHyphae: 5,          // the short hyphae a joined spore grows of its own (× its variation)
   joinedReach: 90,          //   ...and how far they go (short, so the screen stays readable)
   joinedBudget: 900,
-  doneFraction: 0.35,       // share of all spores joined before Giving counts as done
+  // Giving's three colours: how far the help has travelled from the First Spore.
+  // A reached spore takes the band for its generation and sits inside it at its
+  // own fixed `tint` (ADR 0002), so the field keeps per-spore variation instead
+  // of flattening into three identical groups. Junctions blend the hues they
+  // join, which is what turns these three steps into a gradient running outward.
+  // Measured depth at full spread is 5, distributed 5 / 8 / 13 / 11 / 1, so
+  // these thresholds land it at roughly 13 green / 13 blue / 12 purple.
+  reachedBands: [
+    { upTo: 2, hue: [150, 175] },         // generations 1-2: green
+    { upTo: 3, hue: [200, 225] },         // generation 3:    blue
+    { upTo: Infinity, hue: [255, 275] }   // generation 4 on:  purple
+  ],
+  doneFraction: 0.8,        // share of all spores joined before Giving counts as done.
+                            // High enough that all three colours are on screen by then;
+                            // the spread carries on afterwards either way
   autoZoomAfter: 8,         // seconds without scrolling before the camera zooms out by itself
   flexReach: 160,           // how far along a hypha a pulled spore's movement carries
   flexCoupling: 0.6,        // each junction further from the pulled spore moves this share as far
@@ -213,6 +227,14 @@ function sendCord(s, from, target) {
   s.cords.push({ strands, from, target, joined: 0 });
 }
 
+// Which of the three colours a spore reached at this many hops takes, and where
+// inside that band it sits. `tint` is fixed at world creation, so a given spore
+// always lands on the same hue however the run unfolds.
+function reachedHue(generation, tint) {
+  const band = GIVING.reachedBands.find((b) => generation <= b.upTo);
+  return band.hue[0] + tint * (band.hue[1] - band.hue[0]);
+}
+
 function joinNetwork(s, cord, arriving) {
   const { from, target } = cord;
   stopHypha(arriving, 'joined');
@@ -221,6 +243,12 @@ function joinNetwork(s, cord, arriving) {
   // No two spores grow the same: how many hyphae, how far and how curled all
   // come from this spore's own variation (see receiving.js, and ADR 0002).
   const v = target.variation;
+  // Reached, not merely alive: it comes up in the colour of its distance from
+  // the First Spore rather than in its own. `glow` is still 0 here and fades up
+  // after germinate(), so the colour arrives with the spore coming alive rather
+  // than being switched on.
+  target.generation = from.generation + 1;
+  target.hue = reachedHue(target.generation, v.tint);
   target.reachLimit = GIVING.joinedReach * v.reach;
   target.budget = GIVING.joinedBudget * v.reach;
   target.germinate({ count: Math.max(3, Math.round(GIVING.joinedHyphae * v.count)) });

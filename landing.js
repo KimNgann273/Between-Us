@@ -147,15 +147,25 @@ const Landing = {
     };
     const germinated = world.spores.filter((s) => s.germinated).length;
 
-    document.getElementById('telCam').textContent =
-      `CAM ${pad(Camera.x, 7, 1)} , ${pad(Camera.y, 7, 1)}   Z ${Camera.zoom.toFixed(3)}`;
-    document.getElementById('telWorld').textContent =
+    // A readout that is not in the page is simply not shown. This must never
+    // throw: it runs inside draw(), and p5 schedules the next animation frame
+    // only after redraw() returns, so one exception here stops the loop for
+    // good -- the canvas freezes on the last frame it managed, and Begin then
+    // looks like it does nothing.
+    const show = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
+
+    show('telCam',
+      `CAM ${pad(Camera.x, 7, 1)} , ${pad(Camera.y, 7, 1)}   Z ${Camera.zoom.toFixed(3)}`);
+    show('telWorld',
       `SPORES ${String(world.spores.length).padStart(2, '0')}   ` +
       `GERMINATED ${String(germinated).padStart(2, '0')}   ` +
-      `JUNCTIONS ${String(world.junctions.length).padStart(2, '0')}`;
+      `JUNCTIONS ${String(world.junctions.length).padStart(2, '0')}`);
     // Dormant means ungerminated — see CONTEXT.md. The First Spore has its
     // colour from the start and is dormant all the same.
-    document.getElementById('telState').textContent =
-      `STATE ${world.first.germinated ? 'GERMINATED' : 'DORMANT'}   T ${time.toFixed(1).padStart(5, '0')}`;
+    show('telState',
+      `STATE ${world.first.germinated ? 'GERMINATED' : 'DORMANT'}   T ${time.toFixed(1).padStart(5, '0')}`);
   }
 };
